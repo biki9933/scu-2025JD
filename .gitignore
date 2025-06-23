@@ -11,7 +11,7 @@ venv/
 build/
 dist/
 __pycache__/
-
+.gitattributes
 # IDE
 .vscode/
 .idea/
