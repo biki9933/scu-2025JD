@@ -1,5 +1,5 @@
 # debug_nulls.py
-# 一个专门用来诊断训练数据中空值、NaN或其他无效值的脚本
+# 一个专门用来诊断训练数据中空值、NaN或其他无效值的脚本，清楚无效值
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
