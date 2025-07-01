@@ -8,10 +8,4 @@ with DAG(
     start_date=datetime(2023, 1, 1),
     schedule_interval=None,
     catchup=False,
-) as dag:
-    spark_etl_task = SparkSubmitOperator(
-        task_id='spark_etl_job',
-        conn_id='spark_default',
-        application='/Users/Zhuanz/pythonTest/scu-2025JD/src/scripts/spark_etl_dag.py',
-        verbose=False
-    )
+
