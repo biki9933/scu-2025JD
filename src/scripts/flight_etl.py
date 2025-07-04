@@ -1,24 +1,8 @@
- # 6.27 15.34
-# -*- coding: utf-8 -*-
-
-"""
-最终重构版ETL脚本，用于构建航班数据仓库.
-作者: Gemini & 贡献者(用户)
-更新日期: 2025-06-26
-功能:
-1.  在一个脚本内，按正确顺序执行所有ETL操作。
-2.  【关键修复】在创建维度表（尤其是dim_airport）时，增加严格的清洗和过滤逻辑。
-3.  使用清洗干净的维度表来构建最终的事实表 fact_flight_ticket。
-4.  将所有结果以分区的Parquet格式写回Hive。
-"""
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import IntegerType, FloatType, BooleanType
 
- # ==============================================================================
-# 1. 初始化 Spark Session
-# ==============================================================================
 spark = SparkSession.builder \
     .appName("FlightDW_ETL_Complete_Final") \
     .config("spark.sql.warehouse.dir", "/user/hive/warehouse") \
@@ -59,14 +43,7 @@ try:
     # 从清洗后的数据构建维度表
     dim_airport_df = clean_airports_df.select(
         F.col("ident"),  # 保留4位码作为主识别码
-
-
-
-        # F.col("iata_code"),  # 保留3位码用于与事实表关联
         F.regexp_replace(F.col("iata_code"), '"', '').alias("iata_code"),
-
-
-
         F.col("name").alias("airport_name"),
         F.col("municipality").alias("city"),
         F.col("iso_country").alias("country_code")
@@ -81,8 +58,6 @@ except Exception as e:
     spark.stop()
     exit(1)
 
-# --- 4. 创建其他维度表 (以 dim_aircraft, dim_airline, dim_date 为例) ---
-# 你可以按照类似上面的模式，在这里创建其他所有维度表
 print("INFO: (2/4) 开始创建【dim_aircraft】维度表...")
 try:
     # 请确保你的原始飞机数据表名是正确的
