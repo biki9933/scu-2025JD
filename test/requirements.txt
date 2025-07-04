@@ -1,4 +1,0 @@
-# requirements.txt
-
-apache-airflow-providers-hive
---constraint ./local-constraints.txt
