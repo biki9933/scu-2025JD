@@ -2,7 +2,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import IntegerType, FloatType, BooleanType
-
+# 使用Pyspark
 spark = SparkSession.builder \
     .appName("FlightDW_ETL_Complete_Final") \
     .config("spark.sql.warehouse.dir", "/user/hive/warehouse") \
@@ -12,32 +12,26 @@ spark = SparkSession.builder \
 
 print("INFO: Spark Session 初始化成功！")
 
-# ==============================================================================
+
 # 2. 定义并使用数据库
-# ==============================================================================
-# 假设你的原始数据在 'default' 库, 目标数据仓库在 'flight_dw' 库
-# 如果库名不同, 请修改这里的变量
+
 source_db = "flight_dw"
 target_db = "flight_dw"
 
 spark.sql(f"USE {target_db}")
 print(f"INFO: 已切换到目标数据库: {target_db}")
 
-# ==============================================================================
 # PART I: 创建并清洗【维度表】
-# ==============================================================================
 
 # --- 3. 创建并清洗【dim_airport】维度表 ---
-print("INFO: (1/4) 开始创建并清洗【dim_airport】维度表...")
+print("开始创建并清洗【dim_airport】维度表...")
 try:
     spark.catalog.refreshTable("flight_dw.raw_airports")
     # 从源数据库加载机场原始数据
     raw_airports_df = spark.table(f"{source_db}.raw_airports")
-
-    # 【核心修复】清洗并筛选数据，只保留 iata_code 有效的机场
-    print("INFO: 正在过滤 iata_code 为空的无效机场数据...")
+    # 洗并筛选数据，只保留 iata_code 有效的机场
     clean_airports_df = raw_airports_df.filter(
-        (F.col("iata_code").isNotNull()) & (F.trim(F.col("iata_code")) != "")
+        (F.col("iata_code").isNotNull()) & (F.trim(F.col("iata_code")) != "") # 移除字符串两端的空格
     )
 
     # 从清洗后的数据构建维度表
@@ -51,16 +45,14 @@ try:
 
     # 将干净的维度表数据写入Hive，覆盖旧的脏数据
     dim_airport_df.write.mode("overwrite").saveAsTable("dim_airport")
-    print("SUCCESS: 【dim_airport】维度表已使用清洗过的数据重建。")
 
 except Exception as e:
     print(f"ERROR: 创建【dim_airport】时发生错误: {e}")
     spark.stop()
     exit(1)
 
-print("INFO: (2/4) 开始创建【dim_aircraft】维度表...")
+# 开始创建【dim_aircraft】维度表...
 try:
-    # 请确保你的原始飞机数据表名是正确的
     raw_itineraries_df = spark.table(f"{source_db}.raw_itineraries")
 
     # 提取所有不重复的飞机设备描述
@@ -71,13 +63,11 @@ try:
     ).distinct().withColumn("aircraft_fk", F.monotonically_increasing_id())
 
     dim_aircraft_df.write.mode("overwrite").saveAsTable("dim_aircraft")
-    print("SUCCESS: 【dim_aircraft】维度表已成功创建。")
 
 except Exception as e:
     print(f"WARN: 创建【dim_aircraft】时发生错误，将继续执行: {e}")
 
 # dim_airport_detail
-# --- 5. 【新增】创建并关联【dim_flight_details】维度表 ---
 print("INFO: (3/5) 开始创建并关联【dim_flight_details】维度表...")
 try:
     details_cols = ["fare_basis_code", "segments_cabin_code", "is_basic_economy", "is_refundable"]
@@ -101,7 +91,7 @@ except Exception as e:
 
 
 
-print("INFO: (3/4) 开始创建【dim_airline】维度表...")
+# 开始创建【dim_airline】维度表..."
 try:
     # 假设从 `raw_itineraries` 提取航司信息来创建维度表
     raw_itineraries_for_airline_df = spark.table(f"{source_db}.raw_itineraries")
@@ -114,11 +104,10 @@ try:
     ).distinct().withColumn("airline_fk", F.monotonically_increasing_id())
 
     dim_airline_df.write.mode("overwrite").saveAsTable("dim_airline")
-    print("SUCCESS: 【dim_airline】维度表已创建。")
 except Exception as e:
     print(f"WARN: 创建【dim_airline】时发生错误，将继续执行: {e}")
 
-print("INFO: (4/4) 开始创建【dim_date】维度表...")
+# 开始创建【dim_date】维度表..."
 try:
     # 从事实表中提取所有不重复的日期，用于构建日期维度
     raw_itineraries_for_date_df = spark.table(f"{source_db}.raw_itineraries")
@@ -139,15 +128,12 @@ try:
     ).withColumn("date_fk", F.monotonically_increasing_id())
 
     dim_date_df.write.mode("overwrite").saveAsTable("dim_date")
-    print("SUCCESS: 【dim_date】维度表已创建。")
 except Exception as e:
     print(f"ERROR: 创建【dim_date】时发生错误: {e}")
     spark.stop()
     exit(1)
 
-# ==============================================================================
 # PART II: 创建【事实表】
-# ==============================================================================
 
 # --- 5. 加载所有已创建的、干净的维度表 ---
 print("INFO: 开始加载所有已清洗的维度表...")
@@ -249,7 +235,6 @@ final_joined_df = fact_aliased \
           "left_outer") \
     .join(
     dim_flight_details_df.alias("fd"),
-        # 【关键修复】确保关联时，事实表和维度表的字段类型和值都经过了一致的处理
         (F.col("fact.fare_basis_code") == F.col("fd.fare_basis_code")) &
         (F.col("fact.segments_cabin_code") == F.col("fd.segments_cabin_code")) &
         (F.col("fact.is_basic_economy").cast(BooleanType()) == F.col("fd.is_basic_economy")) &
