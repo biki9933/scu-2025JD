@@ -105,13 +105,11 @@ def main():
 
 
     except Exception as e:
-        print(f"\n错误: 在查询过程中发生异常!")
         traceback.print_exc()
     
     finally:
         if base_df is not None and base_df.is_cached:
             base_df.unpersist()
-        print("\n--- 查询结束，正在关闭 Spark Session ---")
         spark.stop()
 
 

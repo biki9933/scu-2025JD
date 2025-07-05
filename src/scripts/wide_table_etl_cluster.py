@@ -121,7 +121,7 @@ def main():
             .option("compression", "snappy") \
             .saveAsTable(target_table)
 
-        print("\n--- 成功！ETL流程执行完毕！---")
+        print("\nETL流程执行完毕！---")
         print(f"最终的宽表 '{target_table}' 已创建/更新。")
 
     except Exception as e:

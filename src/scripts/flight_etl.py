@@ -1,16 +1,6 @@
  # 6.27 15.34
 # -*- coding: utf-8 -*-
 
-"""
-最终重构版ETL脚本，用于构建航班数据仓库.
-作者: Gemini & 贡献者(用户)
-更新日期: 2025-06-26
-功能:
-1.  在一个脚本内，按正确顺序执行所有ETL操作。
-2.  【关键修复】在创建维度表（尤其是dim_airport）时，增加严格的清洗和过滤逻辑。
-3.  使用清洗干净的维度表来构建最终的事实表 fact_flight_ticket。
-4.  将所有结果以分区的Parquet格式写回Hive。
-"""
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
