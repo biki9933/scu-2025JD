@@ -8,13 +8,7 @@ from pyspark.sql.types import (
 
 
 def main():
-    """
-    完整的机票数据ETL流程:
-    1. 读取原始数据
-    2. 类型转换与数据清洗
-    3. 多航段拆分与行程上下文生成
-    4. 按 (search_date, flight_date) 分区写入Parquet表
-    """
+
     # --- 1. 初始化与配置 ---
     # 在生产环境中，可以从配置文件读取这些参数
     source_table = "flight_dw.itineraries_raw_sample"  # 你的原始数据表名
@@ -99,7 +93,7 @@ def main():
                 "segments_airline_name_arr", "segments_duration_in_seconds_arr",
                 "segments_distance_arr", "segments_cabin_code_arr", "segments_equipment_description_arr"
             )
-        ).alias("pos", "segment_data")  # 为两列输出分别提供别名: 'pos' 和 'segment_data'
+        ).alias("pos", "segment_data")
     )
 
     # 整理成最终事实表的结构
