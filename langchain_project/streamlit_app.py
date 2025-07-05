@@ -21,14 +21,9 @@ def get_chain():
     这个函数负责所有昂贵的初始化操作，并返回可执行的LangChain链。
     """
     # 1. 配置环境
-    # deepseek_api_key = "ds_..." # 建议从Streamlit Secrets管理
-    # deepseek_base_url = "https://api.deepseek.com"
-    deepseek_api_key = "sk-a1a52b62f26a436ea2b209045a88fa71"  # 替换为您的DeepSeek API Key
+    deepseek_api_key = "sk-a1a52b62f26a436ea2b209045a88fa71"
     deepseek_base_url = "https://api.deepseek.com"  # 这是DeepSeek的官方API地址
-
     db_user = "root"
-
-
     db_password = "qweasd321"
     db_host = "192.168.101.51"  # 如果MySQL和这个脚本在同一台虚拟机上，就是localhost
     db_port = "3306"  # MySQL默认端口
