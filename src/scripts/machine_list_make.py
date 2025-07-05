@@ -34,7 +34,6 @@ dim_date_df = spark.table("dim_date")
 # 3. 特征提取与丰富
 # ==============================================================================
 print("INFO: 正在关联维度表，提取时间特征...")
-# 我们将事实表与日期维度表关联，以获取航班出发日是“周几”、“几月”等关键信息
 # 注意：我们使用 flight_date_fk 进行关联，因为季节性是由飞行日决定的，而不是搜索日
 model_df = fact_df.join(
     dim_date_df,
@@ -51,14 +50,12 @@ model_df = fact_df.join(
     dim_date_df.day_of_week.alias("flight_day_of_week"), # 航班是周几
     dim_date_df.month.alias("flight_month"),             # 航班所在月份（季节性）
     dim_date_df.week_of_year.alias("flight_week_of_year"), # 航班所在年份的周数
-    # 如果你的dim_date表有is_holiday字段，取消下面一行的注释
-    # dim_date_df.is_holiday.alias("flight_is_holiday")
 )
 
 
-# ==============================================================================
+
 # 4. 【魔法发生的地方】创建“最佳购买时机”的Label
-# ==============================================================================
+
 print("INFO: 正在使用窗口函数计算每个行程的历史最低价...")
 # 定义一个“窗口”，它会按 leg_id 对数据进行分组
 # 这意味着，所有关于同一个航班（比如 MU583 在 2025-10-01 的航班）的票价记录都会被放在一起计算
@@ -69,8 +66,7 @@ model_df_with_min_price = model_df.withColumn(
     "min_fare_for_leg", F.min("total_fare").over(window_spec)
 )
 
-print("INFO: 正在根据'黄金法则'创建分类模型的Label...")
-# 应用我们的“黄金法则”
+# 应用我们的法则
 model_df_final = model_df_with_min_price.withColumn(
     "is_best_time_to_buy", # 这就是我们分类模型的 Label
     F.when(
@@ -79,14 +75,6 @@ model_df_final = model_df_with_min_price.withColumn(
     ).otherwise(0) # 否则，标记为 0 (否)
 )
 
-# 打印一些示例数据来验证我们的逻辑是否正确
-print("INFO: 特征工程和Label创建完成！以下是数据示例：")
-model_df_final.select(
-    "leg_id",
-    "total_fare",
-    "min_fare_for_leg",
-    "is_best_time_to_buy"
-).orderBy("leg_id", "total_fare").show(20)
 
 
 # ==============================================================================
@@ -95,11 +83,9 @@ model_df_final.select(
 TARGET_TABLE = "ml_training_data"
 print(f"INFO: 开始将最终的训练数据写入到新表 `{TARGET_TABLE}` 中...")
 
-# 我们删除了 min_fare_for_leg 这一列，因为它只是我们创建label的中间产物，不应作为模型的特征
+# 删除了 min_fare_for_leg 这一列，因为它只是我们创建label的中间产物，不应作为模型的特征
 model_df_final.drop("min_fare_for_leg").write.mode("overwrite").saveAsTable(TARGET_TABLE)
 
-print(f"SUCCESS! 机器学习的“原料”已准备就绪，并保存在了 `{TARGET_TABLE}` 表中。")
-print("你可以随时通过 `spark.table('ml_training_data')` 来访问它。")
 
 # ==============================================================================
 # 6. 结束任务

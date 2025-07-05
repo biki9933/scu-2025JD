@@ -17,21 +17,14 @@ print("INFO: 已切换到数据库: flight_dw")
 # --- 2. 生成未来预测场景 ---
 print("INFO: 开始生成未来预测场景...")
 
-# 首先，从我们的规则表中获取所有需要预测的航线
+# 获取所有需要预测的航线
 try:
     routes_df = spark.table("flight_dw.route_min_price_rule").select("departure_airport_fk", "arrival_airport_fk")
 except Exception as e:
-    print(f"ERROR: 加载航线表 'route_min_price_rule' 失败，请确保第二步已成功执行: {e}")
     spark.stop()
     exit(1)
 
-# ==========================[关键修复]==========================
-#
-#  【已增加】定义 'today' 变量，这是之前脚本遗漏的关键一行。
-#
 today = datetime.date.today()
-# ==================================================================
-
 # 生成未来6个月（180天），每5天一个的日期序列
 date_list = [(today + datetime.timedelta(days=i)) for i in range(1, 181, 5)]
 
