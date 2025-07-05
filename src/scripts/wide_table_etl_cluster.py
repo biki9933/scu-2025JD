@@ -7,10 +7,9 @@ import traceback
 
 def main():
     """
-    【集群运行版】完整的机票数据ETL流程:
     1. 读取Hive中的原始数据表。
     2. 拆分多航段字段，包括精确的时间字段。
-    3. 生成一个精简的、反规范化的、分区的“超级宽表”。
+    3. 生成一个精简的、分区的“宽表”。
     """
     # --- 1. 配置 ---
     source_table = "flight_dw.itineraries_raw_sample"  # 你的原始数据表名
@@ -114,7 +113,7 @@ def main():
         print("INFO: 最终Schema构建完成。")
         
         # --- 8. 将处理好的数据写入新的分区表中 ---
-        print(f"INFO: 开始将数据写入目标分区表: {target_table}")
+        print(f"INFO: 写入目标分区表: {target_table}")
         final_df.write \
             .partitionBy("search_date", "flight_date") \
             .mode("overwrite") \
@@ -126,11 +125,11 @@ def main():
         print(f"最终的宽表 '{target_table}' 已创建/更新。")
 
     except Exception as e:
-        print(f"\n错误: 在ETL流程中发生异常!")
+
         traceback.print_exc()
     
     finally:
-        print("INFO: 正在关闭 Spark Session...")
+
         spark.stop()
 
 

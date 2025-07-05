@@ -20,7 +20,6 @@ def parse_arguments():
 
 def main():
     """
-    【集群参数化查询版 - 直接读HDFS路径】
     根据命令行传入的参数，从HDFS物理分区路径读取数据，查询特定航线的所有中转方案。
     """
     # --- 1. 获取命令行参数 ---
@@ -30,8 +29,6 @@ def main():
     user_start_airport = args.start.upper()
     user_final_destination = args.dest.upper()
 
-    # --- 2. 初始化集群环境的 Spark Session ---
-    # 注意：这里不再需要 .enableHiveSupport()，因为我们不访问Hive Metastore
     spark = SparkSession.builder \
         .appName(f"HDFS Path Query: {user_start_airport} to {user_final_destination}") \
         .getOrCreate()
@@ -79,8 +76,6 @@ def main():
             
         print(f"\n[步骤1] 过滤成功，找到 {count} 条航段记录。")
 
-        # --- 5, 6, 7: 行程重构、格式化和展示 (逻辑与之前完全相同) ---
-        # ... (此处省略与之前脚本完全相同的5-7步查询和展示逻辑) ...
         # 5. 行程重构
         print("[步骤2] 开始重构行程...")
         reconstructed_df = base_df.groupBy("leg_id").agg(
